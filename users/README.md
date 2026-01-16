@@ -1,51 +1,61 @@
-🌐 Base URL
-https://z0xmua74i2.execute-api.ap-south-1.amazonaws.com/dev
+Below is a **clean, production-ready `README.md`** that you can directly drop into your repo.
+It includes **base URL everywhere**, **all endpoints**, **request/response**, and **user appointment views (upcoming + history)**.
 
+---
+
+# 🩺 Arovita Backend APIs — README
+
+## 🌐 Base URL
+
+```
+https://z0xmua74i2.execute-api.ap-south-1.amazonaws.com/dev
+```
 
 All endpoints below are relative to this base URL.
 
-🔑 Auth Service (user-auth)
-1️⃣ Send OTP
+---
 
-Method: POST
-Endpoint:
+# 🔑 Auth Service (`user-auth`)
 
+---
+
+## 1️⃣ Send OTP
+
+**POST**
+
+```
 /user/get-otp
+```
 
+### Request Body
 
-Full URL
-
-https://z0xmua74i2.execute-api.ap-south-1.amazonaws.com/dev/user/get-otp
-
-
-Request Body
-
+```json
 {
   "phone_number": "+919876543210"
 }
+```
 
+### Response
 
-Response
-
+```json
 {
   "message": "otp_sent"
 }
+```
 
-2️⃣ Signup – Verify OTP & Create User
+---
 
-Method: POST
-Endpoint:
+## 2️⃣ Signup – Verify OTP & Create User
 
+**POST**
+
+```
 /user/signup/verify
+```
 
+### Request Body
 
-Full URL
-
-https://z0xmua74i2.execute-api.ap-south-1.amazonaws.com/dev/user/signup/verify
-
-
-Request Body
-
+```json
 {
   "phone_number": "+919876543210",
   "otp": "123456",
@@ -53,122 +63,151 @@ Request Body
   "email": "user@example.com",
   "first_name": "Tony",
   "last_name": "Stark",
-  "gender": "male",
+  "gender": "MALE",
   "dob": "1999-08-12"
 }
+```
 
+### Response
 
-Response
-
+```json
 {
-  "AccessToken": "...",
-  "IdToken": "...",
-  "RefreshToken": "...",
+  "AccessToken": "ACCESS_TOKEN",
+  "IdToken": "ID_TOKEN",
+  "RefreshToken": "REFRESH_TOKEN",
   "ExpiresIn": 3600,
   "TokenType": "Bearer"
 }
+```
 
-3️⃣ Login (Password)
+---
 
-Method: POST
-Endpoint:
+## 3️⃣ Login (Password)
 
-/user/login
+**POST**
 
+```
+/user/login/password
+```
 
-Full URL
+### Request Body
 
-https://z0xmua74i2.execute-api.ap-south-1.amazonaws.com/dev/user/login
-
-
-Request Body
-
+```json
 {
   "phone_number": "+919876543210",
   "password": "StrongPass@123"
 }
+```
 
-4️⃣ Refresh Token
+### Response
 
-Method: POST
-Endpoint:
+```json
+{
+  "AccessToken": "ACCESS_TOKEN",
+  "IdToken": "ID_TOKEN",
+  "RefreshToken": "REFRESH_TOKEN",
+  "ExpiresIn": 3600
+}
+```
 
+---
+
+## 4️⃣ Refresh Token
+
+**POST**
+
+```
 /user/token/refresh
+```
 
+### Request Body
 
-Full URL
-
-https://z0xmua74i2.execute-api.ap-south-1.amazonaws.com/dev/user/token/refresh
-
-
-Request Body
-
+```json
 {
   "refresh_token": "REFRESH_TOKEN"
 }
+```
 
-5️⃣ Logout
+---
 
-Method: POST
-Endpoint:
+## 5️⃣ Logout
 
+**POST**
+
+```
 /user/logout
+```
 
+### Headers
 
-Headers
-
+```
 Authorization: Bearer <ACCESS_TOKEN>
+```
 
+### Response
 
-Response
-
+```json
 {
   "message": "logged_out"
 }
+```
 
-6️⃣ Change Password
+---
 
-Method: POST
-Endpoint:
+## 6️⃣ Change Password
 
+**POST**
+
+```
 /user/change-password
+```
 
+### Headers
 
-Headers
-
+```
 Authorization: Bearer <ACCESS_TOKEN>
+```
 
+### Request Body
 
-Request Body
-
+```json
 {
   "current_password": "OldPass@123",
   "new_password": "NewStrongPass@456"
 }
+```
 
+### Response
 
-Response
-
+```json
 {
   "message": "password_changed"
 }
+```
 
-👤 User Profile Service (user-profile)
-7️⃣ Get Logged-in User Profile
+---
 
-Method: GET
-Endpoint:
+# 👤 User Profile Service (`user-profile`)
 
+---
+
+## 7️⃣ Get Logged-in User Profile
+
+**GET**
+
+```
 /user/me
+```
 
+### Headers
 
-Headers
-
+```
 Authorization: Bearer <ACCESS_TOKEN>
+```
 
+### Response
 
-Response
-
+```json
 {
   "id": "uuid",
   "first_name": "Tony",
@@ -177,23 +216,31 @@ Response
   "dob": "1999-08-12",
   "profile_completed": false
 }
+```
 
-🩺 Health Survey Service
-8️⃣ Save / Update Health Survey
+---
 
-Method: POST
-Endpoint:
+# 🩺 Health Survey Service (`user-health`)
 
+---
+
+## 8️⃣ Save / Update Health Survey
+
+**POST**
+
+```
 /user/health
+```
 
+### Headers
 
-Headers
-
+```
 Authorization: Bearer <ACCESS_TOKEN>
+```
 
+### Request Body
 
-Request Body
-
+```json
 {
   "food_allergies": ["peanuts"],
   "medicine_allergies": ["penicillin"],
@@ -201,38 +248,45 @@ Request Body
   "others": [],
   "height_cm": 175,
   "weight_kg": 70,
-  "smoking_status": "never",
-  "alcohol_consumption": "occasionally",
+  "smoking_status": "NEVER",
+  "alcohol_consumption": "OCCASIONALLY",
   "sleep_hours_per_night": 8,
-  "physical_activity_level": "moderate",
-  "stress_level": "low",
+  "physical_activity_level": "MODERATE",
+  "stress_level": "LOW",
   "consent_medical": true,
   "consent_data_processing": true,
   "consent_privacy_policy": true,
   "consent_notifications": false
 }
+```
 
-9️⃣ Get Health Survey Details
+### Response
 
-Method: GET
-Endpoint:
+```json
+{
+  "message": "health_profile_saved"
+}
+```
 
-/details
+---
 
+## 9️⃣ Get Health Survey Details
 
-⚠️ NOTE:
-This is mounted under the health resource, so the actual path is:
+**GET**
 
+```
 /user/health/details
+```
 
+### Headers
 
-Headers
-
+```
 Authorization: Bearer <ACCESS_TOKEN>
+```
 
+### Response
 
-Response
-
+```json
 {
   "completed": true,
   "survey": {
@@ -245,28 +299,267 @@ Response
     "stress_level": "LOW"
   }
 }
+```
 
-🔟 Health Survey Status
+---
 
-Method: GET
-Endpoint:
+## 🔟 Health Survey Status
 
-/status
+**GET**
 
-
-Actual path
-
+```
 /user/health/status
+```
 
+### Headers
 
-Headers
-
+```
 Authorization: Bearer <ACCESS_TOKEN>
+```
 
+### Response
 
-Response
-
+```json
 {
   "completed": true
 }
+```
+
+---
+
+# 🧠 Consultation Service (`consultation-service`)
+
+---
+
+## 11️⃣ Instant Consultation – List Doctors
+
+**GET**
+
+```
+/consultation/instant/doctors?speciality=ortho
+```
+
+### Response
+
+```json
+{
+  "doctors": [
+    {
+      "doctor_id": "uuid",
+      "full_name": "Dr. Strange",
+      "years_experience": 10,
+      "consultation_rate": {
+        "video": 500
+      }
+    }
+  ]
+}
+```
+
+---
+
+## 12️⃣ Scheduled Consultation – List Doctors
+
+**GET**
+
+```
+/consultation/scheduled/doctors?speciality=cardio&date=2026-01-20
+```
+
+---
+
+## 13️⃣ Create Instant Consultation
+
+**POST**
+
+```
+/consultation/instant/create
+```
+
+### Request Body
+
+```json
+{
+  "doctor_id": "uuid",
+  "consultation_mode": "VIDEO",
+  "language": "EN",
+  "intake_snapshot": {
+    "symptoms": ["fever", "cough"],
+    "severity": "moderate"
+  }
+}
+```
+
+### Response
+
+```json
+{
+  "appointment_id": "uuid",
+  "consultation_id": "uuid",
+  "status": "INITIATED"
+}
+```
+
+---
+
+## 14️⃣ Create Scheduled Consultation
+
+**POST**
+
+```
+/consultation/scheduled/create
+```
+
+### Request Body
+
+```json
+{
+  "doctor_id": "uuid",
+  "consultation_mode": "VIDEO",
+  "appointment_date": "2026-01-20",
+  "slot_start": "10:00",
+  "slot_end": "10:30",
+  "language": "EN",
+  "intake_snapshot": {
+    "symptoms": ["headache"]
+  }
+}
+```
+
+---
+
+## 15️⃣ Start Consultation (Doctor)
+
+**POST**
+
+```
+/consultation/start
+```
+
+### Request Body
+
+```json
+{
+  "consultation_id": "uuid"
+}
+```
+
+---
+
+## 16️⃣ End Consultation
+
+**POST**
+
+```
+/consultation/end
+```
+
+### Request Body
+
+```json
+{
+  "consultation_id": "uuid"
+}
+```
+
+---
+
+# 💳 Payment Service (`payment-service`)
+
+---
+
+## 17️⃣ Razorpay Webhook (Backend Only)
+
+**POST**
+
+```
+/payments/webhook
+```
+
+✔ Verifies payment signature
+✔ Confirms appointment
+✔ Moves consultation to `WAITING`
+
+---
+
+# 📅 User Appointment Views
+
+---
+
+## 18️⃣ Upcoming Appointments (User)
+
+**GET**
+
+```
+/user/consultations/upcoming
+```
+
+### Headers
+
+```
+Authorization: Bearer <ACCESS_TOKEN>
+```
+
+### Response
+
+```json
+{
+  "appointments": [
+    {
+      "appointment_id": "uuid",
+      "consultation_id": "uuid",
+      "doctor_name": "Dr. Strange",
+      "doctor_specialty": "Cardiology",
+      "appointment_date": "2026-01-20",
+      "slot_start": "10:00",
+      "consultation_mode": "VIDEO",
+      "status": "CONFIRMED"
+    }
+  ]
+}
+```
+
+---
+
+## 19️⃣ Appointment History (User)
+
+**GET**
+
+```
+/user/consultations/history
+```
+
+### Response
+
+```json
+{
+  "appointments": [
+    {
+      "appointment_id": "uuid",
+      "doctor_name": "Dr. House",
+      "appointment_date": "2025-12-10",
+      "consultation_mode": "VIDEO",
+      "status": "COMPLETED"
+    }
+  ]
+}
+```
+
+---
+
+# 🔁 Status Lifecycle Summary
+
+### Appointment Status
+
+```
+CREATED → CONFIRMED → COMPLETED / CANCELLED
+```
+
+### Consultation Status
+
+```
+INITIATED → WAITING → IN_PROGRESS → COMPLETED
+```
+
+
 
