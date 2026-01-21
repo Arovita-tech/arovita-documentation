@@ -1,33 +1,32 @@
-## 📂 API Categories
+🩺 Doctor APIs – Backend Documentation (MVP)
+📂 API Categories
 
----
-Authentication
+🔐 Authentication
 
-Doctor Profile & Settings
+👨‍⚕️ Doctor Profile & Settings
 
-Availability Management
+⏱️ Availability Management
 
-MRN & Bank Verification
+🪪 MRN & Bank Verification
 
-Doctor Home Dashboard
+🏠 Doctor Home Dashboard
 
-Consultations
+📅 Consultations
 
-Patients
+👥 Patients
 
-Prescriptions
---
+💊 Prescriptions
+
+🌐 Base URL
+https://ijcm73njbl.execute-api.ap-south-1.amazonaws.com/dev
 
 
-## 🌐 Base URL
-```
-  https://ijcm73njbl.execute-api.ap-south-1.amazonaws.com/dev/
-```
+All endpoints below are relative to this base URL.
 
 1️⃣ Authentication APIs
-POST /doctor/get-otp
+➤ POST /doctor/get-otp
 
-Send OTP for signup.
+Send OTP for doctor signup.
 
 Request
 
@@ -38,13 +37,13 @@ Request
 
 Response
 
-{ "message": "otp_sent" }
+{
+  "message": "otp_sent"
+}
 
---
+➤ POST /doctor/verify-otp
 
-POST /doctor/verify-otp
-
-Verify OTP & create doctor.
+Verify OTP and create doctor account.
 
 Response
 
@@ -54,26 +53,26 @@ Response
   "refresh_token": "..."
 }
 
-POST /doctor/login/get-otp
+➤ POST /doctor/login/get-otp
 
 Send OTP for existing doctor login.
 
-POST /doctor/login/verify-otp
+➤ POST /doctor/login/verify-otp
 
-Verify OTP and login.
+Verify OTP and log in the doctor.
 
-POST /doctor/token/refresh
+➤ POST /doctor/token/refresh
 
-Refresh tokens.
+Refresh access tokens.
 
-POST /doctor/logout
+➤ POST /doctor/logout
 
 Logout doctor session.
 
 2️⃣ Doctor Profile APIs
-GET /doctor/me
+➤ GET /doctor/me
 
-Fetch doctor profile.
+Fetch logged-in doctor profile.
 
 Response
 
@@ -93,7 +92,9 @@ Response
     "availability": {
       "instant_available": true,
       "weekly_availability": {
-        "monday": [{"from": "10:00", "to": "13:00"}]
+        "monday": [
+          { "from": "10:00", "to": "13:00" }
+        ]
       }
     },
     "consultation_rate": {
@@ -105,15 +106,15 @@ Response
   }
 }
 
-POST /doctor/profile
+➤ POST /doctor/profile
 
-Main onboarding/update endpoint.
+Main onboarding and profile update endpoint.
 
-Rules
+📌 Rules
 
 Partial updates allowed
 
-Sets status = PROFILE_SET
+Automatically sets status = PROFILE_SET
 
 Request
 
@@ -126,7 +127,9 @@ Request
   "availability": {
     "instant_available": true,
     "weekly_availability": {
-      "monday": [{"from": "10:00", "to": "13:00"}]
+      "monday": [
+        { "from": "10:00", "to": "13:00" }
+      ]
     }
   },
   "consultation_rate": {
@@ -139,34 +142,38 @@ Request
 
 Response
 
-{ "message": "profile_updated" }
+{
+  "message": "profile_updated"
+}
 
 3️⃣ Availability APIs
-PATCH /doctor/availability/instant
+➤ PATCH /doctor/availability/instant
 
 Toggle instant consultation availability.
 
 Request
 
-{ "instant_available": true }
+{
+  "instant_available": true
+}
 
-PATCH /doctor/availability/weekly
+➤ PATCH /doctor/availability/weekly
 
-Update weekly slots.
+Update weekly availability slots.
 
 Request
 
 {
   "weekly_availability": {
-    "monday": [{"from": "10:00", "to": "13:00"}],
-    "wednesday": [{"from": "14:00", "to": "18:00"}]
+    "monday": [{ "from": "10:00", "to": "13:00" }],
+    "wednesday": [{ "from": "14:00", "to": "18:00" }]
   }
 }
 
 4️⃣ MRN & Bank APIs
-POST /doctor/mrn/verify
+➤ POST /doctor/mrn/verify
 
-Submit MRN for verification (IDfy).
+Submit Medical Registration Number (MRN) for verification (IDfy).
 
 Request
 
@@ -179,17 +186,19 @@ Request
 
 Response
 
-{ "status": "MRN_VERIFICATION_STARTED" }
+{
+  "status": "MRN_VERIFICATION_STARTED"
+}
 
-GET /doctor/mrn/status
+➤ GET /doctor/mrn/status
 
 Fetch MRN verification status.
 
-GET /doctor/bank
+➤ GET /doctor/bank
 
-Get bank details.
+Fetch saved bank details.
 
-PUT /doctor/bank/update
+➤ PUT /doctor/bank/update
 
 Update bank details.
 
@@ -202,8 +211,8 @@ Request
   "bank_name": "HDFC Bank"
 }
 
-5️⃣ Doctor Home
-GET /doctor/home
+5️⃣ Doctor Home Dashboard
+➤ GET /doctor/home
 
 Response
 
@@ -214,53 +223,56 @@ Response
 }
 
 6️⃣ Consultation APIs
-GET /doctor/consultations/upcoming
-GET /doctor/consultations/active
-GET /doctor/consultations/history
-POST /doctor/consultations/start
+➤ GET /doctor/consultations/upcoming
 
----
-Rules
+Fetch upcoming consultations.
 
-Only doctor can start
+➤ GET /doctor/consultations/active
 
-Consultation must be CONFIRMED
+Fetch current active consultation.
+
+➤ GET /doctor/consultations/history
+
+Fetch completed / cancelled / no-show consultations.
+
+➤ POST /doctor/consultations/start
+📌 Rules
+
+Only the assigned doctor can start
+
+Consultation must be in CONFIRMED state
 
 Payment must be successful
 
----
+➤ POST /doctor/consultations/end
+📌 Rules
 
-POST /doctor/consultations/end
+Only the assigned doctor can end
 
-Rules
-
-Only doctor can end
-
-Status must be IN_PROGRESS
+Consultation must be IN_PROGRESS
 
 7️⃣ Patient APIs
-GET /doctor/patients
+➤ GET /doctor/patients
 
-List all patients consulted by doctor.
+List all patients consulted by the doctor.
 
-GET /doctor/patients/{user_id}
-
----
+➤ GET /doctor/patients/{user_id}
 
 Fetch patient profile.
 
-GET /doctor/patients/{user_id}/consultations
+➤ GET /doctor/patients/{user_id}/consultations
 
-Fetch all consultations (past + upcoming) between doctor and patient.
+Fetch all past, active, and upcoming consultations for the selected patient.
 
----
 8️⃣ Prescription APIs
 🔒 Prescription Rules (STRICT)
 Rule	Enforced
 Consultation must be IN_PROGRESS or COMPLETED	✅
 Only one prescription per consultation	✅
-Doctor must own consultation	✅
-POST /doctor/prescriptions
+Doctor must own the consultation	✅
+➤ POST /doctor/prescriptions
+
+Create prescription for a consultation.
 
 Request
 
@@ -290,8 +302,9 @@ Response
   "prescription_id": "99999999-9999-9999-9999-999999999999"
 }
 
----
-GET /doctor/consultations/{consultation_id}/prescription
+➤ GET /doctor/consultations/{consultation_id}/prescription
+
+Fetch prescription for a consultation.
 
 Response
 
