@@ -380,6 +380,9 @@ Authorization: Bearer <ID_TOKEN>
 ```
 /consultation/scheduled/doctors?speciality=General Medicine&date=2026-01-20
 ```
+```
+Authorization: Bearer <ID_TOKEN>
+```
 
 ---
 
@@ -391,6 +394,10 @@ Authorization: Bearer <ID_TOKEN>
 /consultation/instant/create
 ```
 
+
+```
+Authorization: Bearer <ID_TOKEN>
+```
 ### Request Body
 
 ```json
@@ -425,6 +432,10 @@ Authorization: Bearer <ID_TOKEN>
 /consultation/scheduled/create
 ```
 
+```
+Authorization: Bearer <ID_TOKEN>
+```
+
 ### Request Body
 
 ```json
@@ -443,7 +454,65 @@ Authorization: Bearer <ID_TOKEN>
 
 ---
 
-## 15️⃣ Start Consultation (Doctor)   Strictly to done from the doctor side not the user side.
+
+## 15  consultation confirmation payment for the beta( Ignoring the payments Zero fee.)
+
+**POST**
+
+```
+consultation/confirm
+```
+
+```
+Authorization: Bearer <ID_TOKEN>
+```
+
+
+### Request Body
+
+```json
+{
+    "consultation_id": "149a8e94-0d69-466e-957c-8ff91d1a4792"
+}
+```
+
+---
+
+
+## 16  Agora token accessing
+
+**POST**
+
+```
+agora/token
+```
+
+```
+Authorization: Bearer <ID_TOKEN>
+```
+
+
+### Request Body
+
+```json
+{
+    "consultation_id": "149a8e94-0d69-466e-957c-8ff91d1a4792"
+}
+```
+
+### Response
+```
+{
+    "agora_token": "006de3746ec98d447fbb278ce069f2405afIAAV6JHN9VsDR0ITaLOhToVcUioI+OxUiNTftcqeT9gtu2PsGZIAAAAAIgDX50UB49V2aQQAAQCPhXVpAgCPhXVpAwCPhXVpBACPhXVp",
+    "channel": "887bdea3-b090-4475-87a0-761942cd1c3d",
+    "expires_in": 300,
+    "role": "USER"
+}
+```
+
+---
+
+## 17 Start Consultation (Doctor)   Strictly to done from the doctor side not the user side.
 
 **POST**
 
@@ -465,7 +534,7 @@ Authorization: Bearer <ID_TOKEN>
 
 ---
 
-## 16️⃣ End Consultation
+## 18 End Consultation
 
 **POST**
 
@@ -491,7 +560,7 @@ Authorization: Bearer <ID_TOKEN>
 
 ---
 
-## 17️⃣ Razorpay Webhook (Backend Only)
+##  Razorpay Webhook (Backend Only)
 
 **POST**
 
@@ -509,7 +578,7 @@ Authorization: Bearer <ID_TOKEN>
 
 ---
 
-## 18️⃣ Upcoming Appointments (User)
+## 19 Upcoming Appointments (User)
 
 **GET**
 
@@ -572,7 +641,53 @@ Authorization: Bearer <ID_TOKEN>
 }
 ```
 
+
+
+## view prescription
+
+**GET**
+
+```
+Authorization: Bearer <ID_TOKEN>
+```
+```
+consultations/consultation-id/prescription
+```
+
+
+### Response
+
+```json
+{
+    "consultation_id": "887bdea3-b090-4475-87a0-761942cd1c3d",
+    "issued_at": "2026-01-25",
+    "doctor": {
+        "name": "Dr. Suresh Iyer",
+        "qualification": null,
+        "speciality": null,
+        "registration_number": null,
+        "signature": "Harish"
+    },
+    "patient": {
+        "name": "Arjun Parth",
+        "address": "{\"area\": \"BTM\", \"city\": \"Bangalore\", \"street\": \"MG Road\", \"pincode\": \"560038\"}",
+        "age": 23
+    },
+    "diagnosis": "nothing",
+    "medications": [
+        {
+            "name": "any",
+            "dosage": "ur wish"
+        }
+    ],
+    "tests": null,
+    "advice": null,
+    "follow_up": null
+}
+```
+
 ---
+
 
 ```
 
