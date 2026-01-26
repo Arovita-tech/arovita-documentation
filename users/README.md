@@ -1,4 +1,4 @@
-Below is a **clean, production-ready `README.md`** that you can directly drop into your repo.
+This is a readme file for user-flow
 It includes **base URL everywhere**, **all endpoints**, **request/response**, and **user appointment views (upcoming + history)**.
 
 ---
