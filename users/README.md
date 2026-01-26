@@ -8,7 +8,7 @@ It includes **base URL everywhere**, **all endpoints**, **request/response**, an
 ## 🌐 Base URL
 
 ```
-https://z0xmua74i2.execute-api.ap-south-1.amazonaws.com/dev
+https://toqj4qcitk.execute-api.ap-south-1.amazonaws.com/dev
 ```
 
 All endpoints below are relative to this base URL.
@@ -117,6 +117,10 @@ All endpoints below are relative to this base URL.
 **POST**
 
 ```
+Authorization: Bearer <ID_TOKEN>
+```
+
+```
 /user/token/refresh
 ```
 
@@ -138,10 +142,16 @@ All endpoints below are relative to this base URL.
 /user/logout
 ```
 
+
 ### Headers
 
 ```
 Authorization: Bearer <ACCESS_TOKEN>
+```
+### Request Body
+
+```json
+{}
 ```
 
 ### Response
@@ -162,6 +172,7 @@ Authorization: Bearer <ACCESS_TOKEN>
 /user/change-password
 ```
 
+
 ### Headers
 
 ```
@@ -172,8 +183,8 @@ Authorization: Bearer <ACCESS_TOKEN>
 
 ```json
 {
-  "current_password": "OldPass@123",
-  "new_password": "NewStrongPass@456"
+    "old_password": "Vinay@tcs43",
+    "new_password": "KN@tcsvinay43"
 }
 ```
 
@@ -202,7 +213,7 @@ Authorization: Bearer <ACCESS_TOKEN>
 ### Headers
 
 ```
-Authorization: Bearer <ACCESS_TOKEN>
+Authorization: Bearer <ID_TOKEN>
 ```
 
 ### Response
@@ -235,7 +246,7 @@ Authorization: Bearer <ACCESS_TOKEN>
 ### Headers
 
 ```
-Authorization: Bearer <ACCESS_TOKEN>
+Authorization: Bearer <ID_TOKEN>
 ```
 
 ### Request Body
@@ -281,7 +292,7 @@ Authorization: Bearer <ACCESS_TOKEN>
 ### Headers
 
 ```
-Authorization: Bearer <ACCESS_TOKEN>
+Authorization: Bearer <ID_TOKEN>
 ```
 
 ### Response
@@ -314,7 +325,7 @@ Authorization: Bearer <ACCESS_TOKEN>
 ### Headers
 
 ```
-Authorization: Bearer <ACCESS_TOKEN>
+Authorization: Bearer <ID_TOKEN>
 ```
 
 ### Response
@@ -331,12 +342,16 @@ Authorization: Bearer <ACCESS_TOKEN>
 
 ---
 
-## 11️⃣ Instant Consultation – List Doctors
+## 11 Instant Consultation – List Doctors
 
 **GET**
 
 ```
-/consultation/instant/doctors?speciality=ortho
+Authorization: Bearer <ID_TOKEN>
+```
+
+```
+/consultation/instant/doctors?speciality=General Medicine
 ```
 
 ### Response
@@ -363,7 +378,7 @@ Authorization: Bearer <ACCESS_TOKEN>
 **GET**
 
 ```
-/consultation/scheduled/doctors?speciality=cardio&date=2026-01-20
+/consultation/scheduled/doctors?speciality=General Medicine&date=2026-01-20
 ```
 
 ---
@@ -428,9 +443,13 @@ Authorization: Bearer <ACCESS_TOKEN>
 
 ---
 
-## 15️⃣ Start Consultation (Doctor)
+## 15️⃣ Start Consultation (Doctor)   Strictly to done from the doctor side not the user side.
 
 **POST**
+
+```
+Authorization: Bearer <ID_TOKEN>
+```
 
 ```
 /consultation/start
@@ -451,6 +470,10 @@ Authorization: Bearer <ACCESS_TOKEN>
 **POST**
 
 ```
+Authorization: Bearer <ID_TOKEN>
+```
+
+```
 /consultation/end
 ```
 
@@ -464,7 +487,7 @@ Authorization: Bearer <ACCESS_TOKEN>
 
 ---
 
-# 💳 Payment Service (`payment-service`)
+# 💳 Payment Service (`payment-service`)  Ignored for the beta version.
 
 ---
 
@@ -497,7 +520,7 @@ Authorization: Bearer <ACCESS_TOKEN>
 ### Headers
 
 ```
-Authorization: Bearer <ACCESS_TOKEN>
+Authorization: Bearer <ID_TOKEN>
 ```
 
 ### Response
@@ -526,6 +549,10 @@ Authorization: Bearer <ACCESS_TOKEN>
 **GET**
 
 ```
+Authorization: Bearer <ID_TOKEN>
+```
+
+```
 /user/consultations/history
 ```
 
@@ -547,18 +574,6 @@ Authorization: Bearer <ACCESS_TOKEN>
 
 ---
 
-# 🔁 Status Lifecycle Summary
-
-### Appointment Status
-
-```
-CREATED → CONFIRMED → COMPLETED / CANCELLED
-```
-
-### Consultation Status
-
-```
-INITIATED → WAITING → IN_PROGRESS → COMPLETED
 ```
 
 
