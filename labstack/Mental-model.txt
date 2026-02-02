@@ -1,0 +1,434 @@
+Perfect. Let’s **reset, simplify, and lock the final architecture** so you can deliver this **within 8 days** without over-engineering.
+I’ll **validate your understanding**, **correct only what’s needed**, and then give you:
+
+1. ✅ Final mental model (validated against LabStack docs)
+2. 🧱 End-to-end architecture (services + responsibilities)
+3. 🔁 Complete flow (happy path + cancellations)
+4. 🗄️ Minimal DB tables (only what’s required to go live)
+5. 📆 What to build in 8 days (priority plan)
+
+No fluff. This is **production-ready thinking**.
+
+---
+
+## 1️⃣ First: validate & correct your understanding (important)
+
+You said (summarized):
+
+> Network APIs → fetch & store
+> User selects tests/packages
+> Service availability & slots
+> Payment
+> Place order
+> Webhooks update status
+> Cancellation / reschedule later
+
+### ✅ What you got 100% right
+
+* Network APIs are **backend-only**
+* Tests & packages are a **fixed set from LabStack**
+* Availability & slots are **runtime checks**
+* Payment happens **before placing order**
+* Webhooks are **mandatory**
+* Cancel / reschedule are required
+
+### ⚠️ One key clarification (this is important)
+
+> **Network APIs and Service Availability are NOT dependent on each other**
+
+They are **parallel concerns**, not sequential dependencies.
+
+* Network = *what exists & pricing*
+* Availability = *can it be done here/when*
+
+They only **intersect during price resolution**, not before.
+
+You were *almost* saying this — I’m just making it explicit.
+
+---
+
+## 2️⃣ FINAL mental model (lock this in)
+
+This is the **simplest correct model**, aligned with LabStack docs.
+
+```
+CATALOG (Network APIs)
+  ↓
+USER SELECTION
+  ↓
+FEASIBILITY (Availability + Slots)
+  ↓
+PRICE RESOLUTION
+  ↓
+PAYMENT (Idempotent)
+  ↓
+ORDER PLACEMENT
+  ↓
+WEBHOOK UPDATES (Source of Truth)
+```
+
+Or in one line:
+
+> **Network defines WHAT, Availability defines WHERE/WHEN,
+> Payment enables ORDER, Webhooks define REALITY**
+
+---
+
+## 3️⃣ End-to-end architecture (minimal, scalable)
+
+### 🧩 Services required (ONLY what you need)
+
+### 1️⃣ `catalog-service` (background / cron)
+
+**Purpose:** Sync LabStack Network APIs
+
+Calls:
+
+* getPackages
+* getPackage
+* getTests
+* getTest
+* getLabs (optional)
+* getPackagePreparations
+
+Writes to DB only.
+
+📌 Runs:
+
+* once on deploy
+* nightly cron (later)
+
+---
+
+### 2️⃣ `diagnostic-api` (user-facing, synchronous)
+
+**Purpose:** Everything FE talks to
+
+Responsibilities:
+
+* Return catalog (from DB)
+* Serviceability
+* Slots
+* Quote / price calculation
+* Create order (after payment)
+* Cancel / reschedule order
+* Fetch order status (from DB)
+
+Calls LabStack:
+
+* checkServiceability
+* getSlots
+* placeOrder
+* cancelOrder
+* rescheduleOrder (later)
+
+---
+
+### 3️⃣ `payment-service` (or shared service)
+
+**Purpose:** Payments + idempotency
+
+Responsibilities:
+
+* Create payment intent
+* Verify payment
+* Prevent duplicates
+
+📌 LabStack does NOT handle payment.
+
+---
+
+### 4️⃣ `webhook-handler` (async)
+
+**Purpose:** Order lifecycle updates
+
+Responsibilities:
+
+* Receive LabStack webhooks
+* Update order status
+* Store reports
+* Trigger notifications
+
+Calls LabStack:
+
+* getOrderDetails (fallback)
+* getReport (on demand)
+
+---
+
+### 5️⃣ Infra (minimal)
+
+* API Gateway (Cognito protected)
+* Lambda
+* PostgreSQL
+* EventBridge (optional, for async processing)
+* S3 (for report PDFs, optional now)
+
+---
+
+## 4️⃣ Complete flow (happy path, step-by-step)
+
+### 🔵 Phase 0 — Catalog Sync (offline)
+
+```
+catalog-service → LabStack Network APIs
+               → DB (packages, tests, prices)
+```
+
+---
+
+### 🟢 Phase 1 — User browsing
+
+```
+FE → diagnostic-api → DB
+```
+
+Returns:
+
+* packages
+* tests
+* prices
+* tags
+
+❌ No LabStack call here
+
+---
+
+### 🟡 Phase 2 — User selects test/package
+
+* FE sends selected IDs
+* Backend stores selection (optional)
+
+No dependency on availability yet.
+
+---
+
+### 🟠 Phase 3 — Serviceability
+
+```
+FE → diagnostic-api
+   → LabStack checkServiceability
+```
+
+Returns:
+
+* serviceable labs
+* HOME / CENTER
+
+---
+
+### 🔵 Phase 4 — Slots (optional but recommended)
+
+```
+FE → diagnostic-api
+   → LabStack getSlots
+```
+
+Returns:
+
+* time slots
+
+---
+
+### 🟣 Phase 5 — Price resolution (backend only)
+
+Backend computes:
+
+```
+selected items
+∩ labs supporting them
+∩ serviceable labs
+↓
+final amount
+```
+
+Returns:
+
+```json
+{
+  "quoteId": "q_123",
+  "amount": 3799
+}
+```
+
+---
+
+### 🟤 Phase 6 — Payment (idempotent)
+
+```
+FE → Payment Gateway
+payment_id (unique)
+↓
+BE verifies payment
+```
+
+Store:
+
+* payment_id
+* amount
+* status
+
+---
+
+### 🔴 Phase 7 — Order placement
+
+```
+diagnostic-api → LabStack placeOrder
+```
+
+Store:
+
+* internal_order_id
+* labstack_order_id
+* status = ORDER_INITIATED
+
+---
+
+### 🟢 Phase 8 — Webhooks (truth)
+
+```
+LabStack → webhook-handler
+```
+
+Updates:
+
+* ORDER_SCHEDULED
+* PHLEBO_ASSIGNED
+* SAMPLE_COLLECTED
+* REPORT_DELIVERED
+
+DB becomes **source of truth**.
+
+---
+
+### 🔁 Phase 9 — Cancellation / Reschedule
+
+```
+FE → diagnostic-api
+   → LabStack cancelOrder / rescheduleOrder
+```
+
+Webhook confirms final state.
+
+---
+
+## 5️⃣ Minimal DB tables (ONLY what you need)
+
+### 🗄️ Catalog
+
+#### `diagnostic_packages`
+
+* package_id (LSPxxxx)
+* name
+* description
+* base_price
+* is_home_supported
+* is_center_supported
+
+#### `diagnostic_tests`
+
+* test_id (LSLxxxx)
+* name
+* category
+
+---
+
+### 🧾 Orders
+
+#### `diagnostic_orders`
+
+* internal_order_id (UUID)
+* user_id
+* labstack_order_id
+* status (ENUM)
+* amount
+* selected_items (jsonb)
+* address_snapshot (jsonb)
+* appointment_time
+* created_at
+* updated_at
+
+---
+
+### 💳 Payments
+
+#### `payments`
+
+* payment_id
+* user_id
+* amount
+* status
+* created_at
+
+---
+
+### 🔔 Webhooks
+
+#### `order_events`
+
+* id
+* internal_order_id
+* labstack_status
+* payload (jsonb)
+* received_at
+
+---
+
+## 6️⃣ What you can safely SKIP (for 8 days)
+
+❌ Camp APIs
+❌ Admin wallet balance
+❌ Raw report values
+❌ Advanced analytics
+❌ Multi-lab optimization
+
+You can add these later **without breaking anything**.
+
+---
+
+## 7️⃣ 8-day delivery plan (realistic)
+
+**Day 1–2**
+
+* DB schema
+* Catalog sync (basic)
+
+**Day 3**
+
+* Serviceability + Slots
+
+**Day 4**
+
+* Price resolution + Quote
+
+**Day 5**
+
+* Payment integration
+
+**Day 6**
+
+* Place order + DB
+
+**Day 7**
+
+* Webhook handler
+
+**Day 8**
+
+* Cancel / reschedule
+* Hardening & testing
+
+---
+
+## ✅ Final validation (against LabStack docs)
+
+✔ Uses Network APIs correctly
+✔ Uses Availability APIs correctly
+✔ Uses Order APIs only after payment
+✔ Webhook is source of truth
+✔ Idempotent payments
+✔ No FE trust for price or status
+
+This is **exactly how LabStack expects you to integrate**.
+
+---
