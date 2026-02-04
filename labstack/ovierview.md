@@ -1,6 +1,6 @@
 ## ovierview
 
-# Diagnostic / LabStack Integration – LLD (Demo Version)
+# Diagnostic / LabStack Integration – LLD
 
 
 ---
@@ -40,9 +40,6 @@
 * No external dependency for catalog
 * Prices & metadata are **consistent**
 
-📌 **Demo line:**
-
-> “We treat LabStack network APIs as *reference data* and sync them periodically.”
 
 ---
 
