@@ -1,0 +1,492 @@
+
+
+* ✅ UUIDv7 generated from Python (application layer)
+* ✅ Robust + idempotent + scalable
+
+
+---
+
+# 🔷 IMPORTANT CHANGE FOR UUIDv7
+
+Since UUIDv7 will be generated in Python:
+
+
+* Python generates UUIDv7
+* Pass as `id` explicitly during INSERT
+
+Example:
+
+```python
+from uuid6 import uuid7
+
+appointment_id = uuid7()
+```
+
+---
+
+# 🏗 FINAL TELECONSULTATION SCHEMA (UUIDv7 READY)
+
+---
+
+# 1️⃣ labstack_providers_cache
+
+---
+
+### 🎯 Purpose
+
+Stores **provider metadata snapshot** from LabStack.
+
+This is for:
+
+* Doctor listing
+* Filtering
+* Attaching pricing
+* Offline browsing
+
+NOT for:
+
+* Slots
+* Availability
+
+---
+
+```sql
+CREATE TABLE labstack_providers_cache (
+   id UUID PRIMARY KEY,
+
+   ls_provider_id BIGINT,
+   ls_group_id BIGINT,
+
+   provider_type TEXT NOT NULL,
+   provider_name TEXT,
+   gender TEXT,
+
+   specialities TEXT[],
+   sub_specialities TEXT[],
+   tags JSONB,
+
+   supported_appointment_types TEXT[],
+   languages_known TEXT[],
+
+   years_experience INTEGER,
+   follow_up_days INTEGER,
+
+   profile_url TEXT,
+
+   unit_floor_building TEXT,
+   address TEXT,
+   locality TEXT,
+   city TEXT,
+   state TEXT,
+   pincode TEXT,
+   latitude DOUBLE PRECISION,
+   longitude DOUBLE PRECISION,
+
+   active BOOLEAN DEFAULT true,
+   last_synced_at TIMESTAMPTZ,
+
+   raw_payload JSONB NOT NULL,
+
+   created_at TIMESTAMPTZ DEFAULT now(),
+   updated_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+---
+
+### 🧠 Why This Table Exists
+
+We do NOT want to call LabStack every time user opens doctor page.
+
+So we:
+
+* Sync daily
+* Store locally
+* Query fast
+
+---
+
+### ⚠ Important Rule
+
+Never trust this for:
+
+* Real-time availability
+* Distance
+* Slots
+
+Those must be fetched live.
+
+---
+
+# 2️⃣ labstack_procedures_cache
+
+---
+
+### 🎯 Purpose
+
+Stores procedure mapping from LabStack.
+
+Used when:
+
+* Booking appointment
+* Validating procedure ID
+
+---
+
+```sql
+CREATE TABLE labstack_procedures_cache (
+   id UUID PRIMARY KEY,
+
+   ls_procedure_id BIGINT UNIQUE NOT NULL,
+
+   name TEXT NOT NULL,
+   speciality TEXT,
+   sub_speciality TEXT,
+
+   pre_procedure_instructions TEXT,
+   post_procedure_instructions TEXT,
+
+   raw_payload JSONB,
+
+   created_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+---
+
+# 3️⃣ ENUM TYPES
+
+---
+
+```sql
+CREATE TYPE labstack_appointment_status AS ENUM (
+   'PENDING',
+   'CREATED',
+   'CONFIRMED',
+   'CANCELED',
+   'RESCHEDULED',
+   'COMPLETED'
+);
+
+CREATE TYPE labstack_internal_status AS ENUM (
+   'PAYMENT_PENDING',
+   'PAYMENT_CONFIRMED',
+   'BOOKING_IN_PROGRESS',
+   'BOOKED',
+   'FAILED',
+   'REFUNDED'
+);
+```
+
+---
+
+### 🧠 Why Two Status Columns?
+
+We separate:
+
+* External state (LabStack)
+* Internal business state (Payment + Booking lifecycle)
+
+This prevents:
+
+* State confusion
+* Race conditions
+* Inconsistent flow
+
+---
+
+# 4️⃣ labstack_appointments (CORE TABLE)
+
+---
+
+### 🎯 Purpose
+
+This is the **heart of teleconsultation**.
+
+Tracks:
+
+* Payment state
+* Booking state
+* Provider snapshot
+* Patient snapshot
+* LabStack mapping
+* Idempotency
+* Audit
+
+---
+
+```sql
+CREATE TABLE labstack_appointments (
+   id UUID PRIMARY KEY,
+
+   user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+
+   labstack_appointment_id BIGINT UNIQUE,
+   ls_provider_id BIGINT,
+   ls_group_id BIGINT,
+   ls_procedure_id BIGINT,
+
+   provider_name TEXT,
+   provider_gender TEXT,
+   provider_unit_floor_building TEXT,
+   provider_address TEXT,
+   provider_locality TEXT,
+   provider_city TEXT,
+   provider_state TEXT,
+   provider_latitude DOUBLE PRECISION,
+   provider_longitude DOUBLE PRECISION,
+
+   appointment_type TEXT NOT NULL,
+   appointment_datetime TIMESTAMPTZ NOT NULL,
+
+   appointment_status labstack_appointment_status,
+   internal_status labstack_internal_status NOT NULL,
+
+   idempotency_key TEXT UNIQUE NOT NULL,
+   version INTEGER DEFAULT 0,
+
+   reference_id TEXT,
+   cancel_reason TEXT,
+
+   is_follow_up BOOLEAN DEFAULT false,
+   follow_up_until TIMESTAMPTZ,
+
+   meeting_link TEXT,
+   meeting_type TEXT,
+
+   price_paid NUMERIC(12,2),
+
+   patient_unique_id TEXT NOT NULL,
+   patient_name TEXT NOT NULL,
+   patient_email TEXT,
+   patient_mobile TEXT,
+   patient_alt_contact TEXT,
+   patient_dob DATE,
+   patient_age INTEGER,
+   patient_gender TEXT,
+
+   patient_unit_floor_building TEXT,
+   patient_address TEXT,
+   patient_locality TEXT,
+   patient_city TEXT,
+   patient_state TEXT,
+   patient_pincode TEXT,
+   patient_latitude DOUBLE PRECISION,
+   patient_longitude DOUBLE PRECISION,
+
+   relationship TEXT,
+   main_user_unique_id TEXT,
+
+   request_payload JSONB NOT NULL,
+   response_payload JSONB,
+   last_webhook_payload JSONB,
+
+   created_at TIMESTAMPTZ DEFAULT now(),
+   updated_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+---
+
+### 🧠 Why version Column?
+
+Used for **optimistic locking**.
+
+Example:
+
+```sql
+UPDATE labstack_appointments
+SET internal_status = 'BOOKED',
+    version = version + 1
+WHERE id = :id AND version = :current_version;
+```
+
+Prevents double update in concurrent Lambda execution.
+
+---
+
+# 5️⃣ labstack_documents
+
+---
+
+### 🎯 Purpose
+
+Stores:
+
+* Prescriptions
+* Reports
+* Uploaded documents
+
+---
+
+```sql
+CREATE TABLE labstack_documents (
+   id UUID PRIMARY KEY,
+
+   labstack_appointment_id BIGINT NOT NULL
+       REFERENCES labstack_appointments(labstack_appointment_id)
+       ON DELETE CASCADE,
+
+   labstack_document_id BIGINT,
+   document_type TEXT NOT NULL,
+   mime_type TEXT,
+   document_link TEXT,
+
+   downloaded_to_s3 BOOLEAN DEFAULT false,
+   s3_object_key TEXT,
+
+   raw_payload JSONB,
+
+   created_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+---
+
+# 6️⃣ labstack_prescriptions
+
+---
+
+### 🎯 Purpose
+
+Stores structured prescription data.
+
+---
+
+```sql
+CREATE TABLE labstack_prescriptions (
+   id UUID PRIMARY KEY,
+
+   labstack_appointment_id BIGINT UNIQUE NOT NULL
+       REFERENCES labstack_appointments(labstack_appointment_id)
+       ON DELETE CASCADE,
+
+   chief_complaints TEXT,
+   doctor_notes TEXT,
+   follow_up_advice TEXT,
+
+   lab_tests JSONB,
+   medication JSONB,
+
+   raw_payload JSONB,
+
+   created_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+---
+
+# 7️⃣ labstack_webhook_logs
+
+---
+
+### 🎯 Purpose
+
+Critical for:
+
+* Idempotency
+* Audit
+* Debugging
+* Safe retry
+
+---
+
+```sql
+CREATE TABLE labstack_webhook_logs (
+   id UUID PRIMARY KEY,
+
+   labstack_appointment_id BIGINT,
+   appointment_status TEXT,
+
+   event_hash TEXT UNIQUE NOT NULL,
+
+   payload JSONB NOT NULL,
+
+   processed BOOLEAN DEFAULT false,
+   processed_at TIMESTAMPTZ,
+   error_message TEXT,
+
+   received_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+---
+
+### 🧠 Why event_hash?
+
+Compute:
+
+```python
+sha256(json.dumps(payload))
+```
+
+Prevents duplicate webhook processing.
+
+---
+
+# 8️⃣ labstack_admin_logs
+
+---
+
+### 🎯 Purpose
+
+Logs:
+
+* Wallet balance
+* System health checks
+
+---
+
+```sql
+CREATE TABLE labstack_admin_logs (
+   id UUID PRIMARY KEY,
+
+   wallet_balance NUMERIC(12,2),
+   system_healthy BOOLEAN,
+
+   raw_payload JSONB,
+
+   created_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+---
+
+# 🔥 What Changed for UUIDv7
+
+* No DB-side UUID generation
+* All UUID fields require explicit insert
+* Primary keys become ordered by time
+* Better index performance
+* Lower bloat
+
+---
+
+# 🧠 Explanation Summary
+
+| Table                     | Why It Exists                 |
+| ------------------------- | ----------------------------- |
+| labstack_providers_cache  | Store doctor metadata locally |
+| labstack_procedures_cache | Store procedure mapping       |
+| labstack_appointments     | Core booking + state machine  |
+| labstack_documents        | Store reports & documents     |
+| labstack_prescriptions    | Store structured prescription |
+| labstack_webhook_logs     | Webhook safety + idempotency  |
+| labstack_admin_logs       | System audit                  |
+
+---
+
+# 🏆 Final Verdict
+
+-UUIDv7
+
+It improves:
+
+* Insert performance
+* Index locality
+* Scalability
+* Time-order queries
+* Production robustness
+
+---
+
